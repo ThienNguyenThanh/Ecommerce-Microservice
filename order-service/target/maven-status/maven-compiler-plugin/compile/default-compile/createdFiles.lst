@@ -1,0 +1,8 @@
+com\ecommerce\orderservice\model\Order.class
+com\ecommerce\orderservice\repository\OrderReposity.class
+com\ecommerce\orderservice\controller\OrderController.class
+com\ecommerce\orderservice\model\OrderLineItems.class
+com\ecommerce\orderservice\dto\OrderRequest.class
+com\ecommerce\orderservice\OrderServiceApplication.class
+com\ecommerce\orderservice\service\OrderService.class
+com\ecommerce\orderservice\dto\OrderLineItemsDto.class
