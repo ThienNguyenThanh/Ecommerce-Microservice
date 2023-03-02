@@ -1,7 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.ecommerce.productservice.ProductServiceApplicationTests
--------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 0.355 s <<< FAILURE! - in com.ecommerce.productservice.ProductServiceApplicationTests
-com.ecommerce.productservice.ProductServiceApplicationTests  Time elapsed: 0.354 s  <<< ERROR!
-java.lang.IllegalStateException: Could not find a valid Docker environment. Please see logs and check configuration
-
