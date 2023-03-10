@@ -9,15 +9,18 @@ import org.example.order.OrderResponse;
 import org.example.order.OrderServiceGrpc;
 
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class OrderService extends OrderServiceGrpc.OrderServiceImplBase {
+    private Logger logger = Logger.getLogger(OrderService.class.getName());
     private OrderDao orderDao = new OrderDao();
 
     @Override
     public void getOrderForUser(OrderRequest request, StreamObserver<OrderResponse> responseObserver) {
         List<Order> orders = orderDao.getOrders(request.getUserId());
 
+        logger.info("Get order from OrderDao and converting to OrderResponse proto object");
         List<org.example.order.Order> orderForUser = orders.stream().map(order -> org.example.order.Order.newBuilder()
                 .setUserId(order.getUserId())
                 .setOrderId(order.getOrderId())
