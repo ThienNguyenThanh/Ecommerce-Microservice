@@ -1,4 +1,4 @@
-module github.com/ThienNguyenThanh/Ecommerce-Microservice/src/frontend
+module microservices/frontend
 
 go 1.20
 

@@ -4,7 +4,7 @@
 // - protoc             v4.22.2
 // source: general.proto
 
-package __
+package genproto
 
 import (
 	context "context"
