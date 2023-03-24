@@ -18,3 +18,25 @@ func (fe *frontendServer) getProduct(ctx context.Context, id string) (*pb.Produc
 
 	return product, err
 }
+
+func (fe *frontendServer) getCart(ctx context.Context, userID string) ([]*pb.CartItem, error) {
+	response, err := pb.NewCartServiceClient(fe.cartServiceConn).
+		GetCart(ctx, &pb.GetCartRequest{UserId: userID})
+
+	return response.GetItems(), err
+}
+
+// func (fe *frontendServer) getCurrencies(ctx context.Context) ([]string, error) {
+// 	currs, err := pb.NewCurrencyServiceClient(fe.currencySvcConn).
+// 		GetSupportedCurrencies(ctx, &pb.Empty{})
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	var out []string
+// 	for _, c := range currs.CurrencyCodes {
+// 		if _, ok := whitelistedCurrencies[c]; ok {
+// 			out = append(out, c)
+// 		}
+// 	}
+// 	return out, nil
+// }

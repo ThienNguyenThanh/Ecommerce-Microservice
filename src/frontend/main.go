@@ -29,6 +29,9 @@ var (
 type frontendServer struct {
 	productCatalogServiceAddress string
 	productCatalogServiceConn    *grpc.ClientConn
+
+	cartServiceAddress string
+	cartServiceConn    *grpc.ClientConn
 }
 
 func main() {
@@ -38,13 +41,17 @@ func main() {
 	svc := new(frontendServer)
 
 	mustMapEnv(&svc.productCatalogServiceAddress, "PRODUCT_CATALOG_SERVICE_ADDR")
+	mustMapEnv(&svc.cartServiceAddress, "CART_SERVICE_ADDR")
+
 	mustConnGRPC(ctx, &svc.productCatalogServiceConn, svc.productCatalogServiceAddress)
+	mustConnGRPC(ctx, &svc.cartServiceConn, svc.cartServiceAddress)
 
 	fs := http.FileServer(http.Dir("./static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 	http.HandleFunc("/", svc.homeHandler)
 	http.HandleFunc("/header", svc.headerHandler)
 	http.HandleFunc("/product", svc.productHandler)
+	http.HandleFunc("/cart", svc.viewCartHandler)
 
 	fmt.Println("Start server at port " + srvPort)
 	log.Fatal(http.ListenAndServe("localhost:"+srvPort, nil))
