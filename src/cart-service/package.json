@@ -1,0 +1,25 @@
+{
+  "name": "cart-service",
+  "version": "1.0.0",
+  "description": "Retrieved data from Redis",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ThienNguyenThanh/Ecommerce-Microservice.git"
+  },
+  "author": "Thien Nguyen",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ThienNguyenThanh/Ecommerce-Microservice/issues"
+  },
+  "homepage": "https://github.com/ThienNguyenThanh/Ecommerce-Microservice#readme",
+  "dependencies": {
+    "@grpc/grpc-js": "^1.8.12",
+    "@grpc/proto-loader": "^0.7.5",
+    "pino": "^8.11.0",
+    "redis": "^4.6.5"
+  }
+}
