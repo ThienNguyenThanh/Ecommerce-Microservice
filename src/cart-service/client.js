@@ -19,7 +19,7 @@ var client = new shopProto.CartService(`localhost:${PORT}`,
                                        grpc.credentials.createInsecure());
 
 const logger = pino({
-  name: 'currencyservice-client',
+  name: 'cartservice-client',
   messageKey: 'message',
   formatters: {
     level (logLevelString, logLevelNum) {

@@ -5,6 +5,10 @@ import (
 	pb "microservices/frontend/genproto"
 )
 
+const (
+	avoidNoopCurrencyConversionRPC = false
+)
+
 func (fe *frontendServer) getProducts(ctx context.Context) ([]*pb.Product, error) {
 	products, err := pb.NewProductCatalogServiceClient(fe.productCatalogServiceConn).
 		ListProducts(ctx, &pb.Empty{})
@@ -46,17 +50,27 @@ func (fe *frontendServer) emptyCart(ctx context.Context, userID string) error {
 	return err
 }
 
-// func (fe *frontendServer) getCurrencies(ctx context.Context) ([]string, error) {
-// 	currs, err := pb.NewCurrencyServiceClient(fe.currencySvcConn).
-// 		GetSupportedCurrencies(ctx, &pb.Empty{})
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	var out []string
-// 	for _, c := range currs.CurrencyCodes {
-// 		if _, ok := whitelistedCurrencies[c]; ok {
-// 			out = append(out, c)
-// 		}
-// 	}
-// 	return out, nil
-// }
+func (fe *frontendServer) getCurrencies(ctx context.Context) ([]string, error) {
+	currs, err := pb.NewCurrencyServiceClient(fe.currencyServiceConn).
+		GetSupportedCurrencies(ctx, &pb.Empty{})
+	if err != nil {
+		return nil, err
+	}
+	var out []string
+	for _, c := range currs.CurrencyCodes {
+		if _, ok := whitelistedCurrencies[c]; ok {
+			out = append(out, c)
+		}
+	}
+	return out, nil
+}
+
+func (fe *frontendServer) convertCurrency(ctx context.Context, money *pb.Money, currency string) (*pb.Money, error) {
+	if avoidNoopCurrencyConversionRPC && money.GetCurrencyCode() == currency {
+		return money, nil
+	}
+	return pb.NewCurrencyServiceClient(fe.currencyServiceConn).
+		Convert(ctx, &pb.CurrencyConversionRequest{
+			From:   money,
+			ToCode: currency})
+}

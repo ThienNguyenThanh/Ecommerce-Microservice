@@ -167,6 +167,18 @@
                                 </select>
                                 <img src="/static/icons/Hipster_DownArrow.svg" alt="" class="cymbal-dropdown-chevron">
                             </div>
+
+                            <div class="col-md-4 cymbal-form-field">
+                                <label for="credit_card_expiration_year">Year</label>
+                                <select name="credit_card_expiration_year" id="credit_card_expiration_year">
+                                {{ range $i, $y := $.expiration_years}}<option value="{{$y}}"
+                                    {{if eq $i 1 -}}
+                                        selected="selected"
+                                    {{- end}}
+                                >{{$y}}</option>{{end}}
+                                </select>
+                                <img src="/static/icons/Hipster_DownArrow.svg" alt="" class="cymbal-dropdown-chevron">
+                            </div>
                             
                             <div class="col-md-3 cymbal-form-field">
                                 <label for="credit_card_cvv">CVV</label>

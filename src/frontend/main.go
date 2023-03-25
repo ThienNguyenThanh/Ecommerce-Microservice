@@ -24,7 +24,17 @@ var (
 		"CAD": true,
 		"JPY": true,
 		"GBP": true,
-		"TRY": true}
+		"VND": true}
+)
+
+const (
+	port            = "3080"
+	defaultCurrency = "USD"
+	cookieMaxAge    = 60 * 60 * 48
+
+	cookiePrefix    = "shop_"
+	cookieSessionID = cookiePrefix + "session-id"
+	cookieCurrency  = cookiePrefix + "currency"
 )
 
 type frontendServer struct {
@@ -33,19 +43,24 @@ type frontendServer struct {
 
 	cartServiceAddress string
 	cartServiceConn    *grpc.ClientConn
+
+	currencyServiceAddress string
+	currencyServiceConn    *grpc.ClientConn
 }
 
 func main() {
 
 	ctx := context.Background()
-	srvPort := "3080"
+	srvPort := port
 	svc := new(frontendServer)
 
 	mustMapEnv(&svc.productCatalogServiceAddress, "PRODUCT_CATALOG_SERVICE_ADDR")
 	mustMapEnv(&svc.cartServiceAddress, "CART_SERVICE_ADDR")
+	mustMapEnv(&svc.currencyServiceAddress, "CURRENCY_SERVICE_ADDR")
 
 	mustConnGRPC(ctx, &svc.productCatalogServiceConn, svc.productCatalogServiceAddress)
 	mustConnGRPC(ctx, &svc.cartServiceConn, svc.cartServiceAddress)
+	mustConnGRPC(ctx, &svc.currencyServiceConn, svc.currencyServiceAddress)
 
 	r := mux.NewRouter()
 	fs := http.FileServer(http.Dir("./static"))
@@ -56,6 +71,7 @@ func main() {
 	r.HandleFunc("/cart", svc.viewCartHandler).Methods(http.MethodGet, http.MethodHead)
 	r.HandleFunc("/cart", svc.addToCartHandler).Methods(http.MethodPost)
 	r.HandleFunc("/cart/empty", svc.emptyCartHandler).Methods(http.MethodPost)
+	r.HandleFunc("/setCurrency", svc.setCurrencyHandler).Methods(http.MethodPost)
 
 	var handler http.Handler = r
 

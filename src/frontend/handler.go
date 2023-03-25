@@ -5,13 +5,18 @@ import (
 	"html/template"
 	"net/http"
 	"strconv"
+	"time"
 
 	pb "microservices/frontend/genproto"
 
 	"github.com/gorilla/mux"
 )
 
-var tpl = template.Must(template.ParseGlob("templates/*.html"))
+var tpl = template.Must(template.New("").
+	Funcs(template.FuncMap{
+		"renderMoney":        renderMoney,
+		"renderCurrencyLogo": renderCurrencyLogo,
+	}).ParseGlob("templates/*.html"))
 
 func (fe *frontendServer) addToCartHandler(w http.ResponseWriter, r *http.Request) {
 	quantity, _ := strconv.ParseUint(r.FormValue("quantity"), 10, 32)
@@ -48,27 +53,71 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 		panic(fmt.Sprintf("%v: could not retrieve cart", err))
 	}
 
+	currencies, err := fe.getCurrencies(r.Context())
+	if err != nil {
+		panic(fmt.Sprintf("%v: could not retrieve currencies", err))
+	}
+
 	type cartItemView struct {
 		Item     *pb.Product
 		Quantity int32
+		Price    *pb.Money
 	}
 
 	items := make([]cartItemView, len(cart))
+	// totalPrice := pb.Money{CurrencyCode: currentCurrency(r)}
+
 	for idx, item := range cart {
 		product, err := fe.getProduct(r.Context(), item.GetProductId())
 		if err != nil {
 			panic(fmt.Sprintf("%v: Can not retrieve product", err))
 		}
+
+		// price, err := fe.convertCurrency(r.Context(), product.GetPriceUsd(), currentCurrency(r))
+		// if err != nil {
+		// 	panic(fmt.Sprintf("%v: could not convert currency for productt", err))
+		// }
+
+		// multPrice := money.MultiplySlow(*price, uint32(item.GetQuantity()))
 		items[idx] = cartItemView{
 			Item:     product,
 			Quantity: item.GetQuantity(),
+			// Price:    &multPrice
 		}
 	}
 
+	// totalPrice = money.Must(money.Sum(totalPrice, *shippingCost))
+	year := time.Now().Year()
+
 	tpl.ExecuteTemplate(w, "cart", map[string]interface{}{
-		"items":     items,
-		"cart_size": cartSize(cart),
+		"user_currency":    currentCurrency(r),
+		"currencies":       currencies,
+		"items":            items,
+		"show_currency":    true,
+		"cart_size":        cartSize(cart),
+		"expiration_years": []int{year, year + 1, year + 2, year + 3, year + 4},
 	})
+}
+
+func (fe *frontendServer) setCurrencyHandler(w http.ResponseWriter, r *http.Request) {
+	// log := r.Context().Value(ctxKeyLog{}).(logrus.FieldLogger)
+	cur := r.FormValue("currency_code")
+	// log.WithField("curr.new", cur).WithField("curr.old", currentCurrency(r)).
+	// 	Debug("setting currency")
+
+	if cur != "" {
+		http.SetCookie(w, &http.Cookie{
+			Name:   cookieCurrency,
+			Value:  cur,
+			MaxAge: cookieMaxAge,
+		})
+	}
+	referer := r.Header.Get("referer")
+	if referer == "" {
+		referer = "/"
+	}
+	w.Header().Set("Location", referer)
+	w.WriteHeader(http.StatusFound)
 }
 
 func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request) {
@@ -99,6 +148,11 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.Context())
 
+	currencies, err := fe.getCurrencies(r.Context())
+	if err != nil {
+		panic(fmt.Sprintf("%v: could not retrieve currencies", err))
+	}
+
 	products, err := fe.getProducts(r.Context())
 	if err != nil {
 		panic(fmt.Sprintf("%v: could not retrieve products", err))
@@ -115,14 +169,19 @@ func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	productList := make([]productView, len(products))
 	for idx, p := range products {
-		productList[idx] = productView{p, p.GetPriceUsd()}
+		price, err := fe.convertCurrency(r.Context(), p.GetPriceUsd(), currentCurrency(r))
+		if err != nil {
+			panic(fmt.Sprintf("%v: could not convert currency conversion for product", err))
+		}
+
+		productList[idx] = productView{p, price}
 	}
 	tpl.ExecuteTemplate(w, "home", map[string]interface{}{
 		// "session_id":        sessionID(r),
 		// "request_id":        r.Context().Value(ctxKeyRequestID{}),
-		// "user_currency":     currentCurrency(r),
+		"user_currency": currentCurrency(r),
 		"show_currency": true,
-		"currencies":    "VND",
+		"currencies":    currencies,
 		"products":      productList,
 		"cart_size":     cartSize(cart),
 		// "banner_color":      os.Getenv("BANNER_COLOR"), // illustrates canary deployments
@@ -163,4 +222,34 @@ func cartSize(c []*pb.CartItem) int {
 		cartSize += int(item.GetQuantity())
 	}
 	return cartSize
+}
+
+func currentCurrency(r *http.Request) string {
+	c, _ := r.Cookie(cookieCurrency)
+	if c != nil {
+		return c.Value
+	}
+	return defaultCurrency
+}
+
+func renderMoney(money pb.Money) string {
+	currencyLogo := renderCurrencyLogo(money.GetCurrencyCode())
+	return fmt.Sprintf("%s%d.%02d", currencyLogo, money.GetUnits(), money.GetNanos()/10000000)
+}
+
+func renderCurrencyLogo(currencyCode string) string {
+	logos := map[string]string{
+		"USD": "$",
+		"CAD": "$",
+		"JPY": "¥",
+		"EUR": "€",
+		"VND": "Đ",
+		"GBP": "£",
+	}
+
+	logo := "$" //default
+	if val, ok := logos[currencyCode]; ok {
+		logo = val
+	}
+	return logo
 }
