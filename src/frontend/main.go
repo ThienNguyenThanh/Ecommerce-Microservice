@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 )
@@ -46,15 +47,20 @@ func main() {
 	mustConnGRPC(ctx, &svc.productCatalogServiceConn, svc.productCatalogServiceAddress)
 	mustConnGRPC(ctx, &svc.cartServiceConn, svc.cartServiceAddress)
 
+	r := mux.NewRouter()
 	fs := http.FileServer(http.Dir("./static"))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
-	http.HandleFunc("/", svc.homeHandler)
-	http.HandleFunc("/header", svc.headerHandler)
-	http.HandleFunc("/product", svc.productHandler)
-	http.HandleFunc("/cart", svc.viewCartHandler)
+
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
+	r.HandleFunc("/", svc.homeHandler).Methods(http.MethodGet, http.MethodHead)
+	r.HandleFunc("/product/{id}", svc.productHandler).Methods(http.MethodGet, http.MethodHead)
+	r.HandleFunc("/cart", svc.viewCartHandler).Methods(http.MethodGet, http.MethodHead)
+	r.HandleFunc("/cart", svc.addToCartHandler).Methods(http.MethodPost)
+	r.HandleFunc("/cart/empty", svc.emptyCartHandler).Methods(http.MethodPost)
+
+	var handler http.Handler = r
 
 	fmt.Println("Start server at port " + srvPort)
-	log.Fatal(http.ListenAndServe("localhost:"+srvPort, nil))
+	log.Fatal(http.ListenAndServe("localhost:"+srvPort, handler))
 
 	// viperenv := mustMapEnv("STRONGEST_AVENGER")
 

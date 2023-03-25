@@ -4,15 +4,42 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strconv"
 
 	pb "microservices/frontend/genproto"
+
+	"github.com/gorilla/mux"
 )
 
 var tpl = template.Must(template.ParseGlob("templates/*.html"))
 
-func (fe *frontendServer) headerHandler(w http.ResponseWriter, r *http.Request) {
-	// p := Header{Title: "Header", User: "Thien"}
-	tpl.ExecuteTemplate(w, "header", nil)
+func (fe *frontendServer) addToCartHandler(w http.ResponseWriter, r *http.Request) {
+	quantity, _ := strconv.ParseUint(r.FormValue("quantity"), 10, 32)
+	productID := r.FormValue("product_id")
+	if productID == "" || quantity == 0 {
+		fmt.Println("Invalid form input")
+	}
+
+	product, err := fe.getProduct(r.Context(), productID)
+	if err != nil {
+		panic(fmt.Sprintf("%v: Can not retrieve product", err))
+	}
+
+	if err := fe.addToCart(r.Context(), "thien123", product.GetId(), int32(quantity)); err != nil {
+		panic(fmt.Sprintf("%v: Fail to add to cart", err))
+	}
+
+	w.Header().Set("location", "/cart")
+	w.WriteHeader(http.StatusFound)
+}
+
+func (fe *frontendServer) emptyCartHandler(w http.ResponseWriter, r *http.Request) {
+	if err := fe.emptyCart(r.Context(), "thien123"); err != nil {
+		panic(fmt.Sprintf("%v: Fail to add to cart", err))
+	}
+
+	w.Header().Set("location", "/cart")
+	w.WriteHeader(http.StatusFound)
 }
 
 func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request) {
@@ -45,7 +72,7 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
+	id := mux.Vars(r)["id"]
 	if id == "" {
 		panic(fmt.Sprintf("Can not load product %v", id))
 	}

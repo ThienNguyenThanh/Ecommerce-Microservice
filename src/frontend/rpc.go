@@ -26,6 +26,26 @@ func (fe *frontendServer) getCart(ctx context.Context, userID string) ([]*pb.Car
 	return response.GetItems(), err
 }
 
+func (fe *frontendServer) addToCart(ctx context.Context, userID string, productID string, quantity int32) error {
+	_, err := pb.NewCartServiceClient(fe.cartServiceConn).
+		AddItem(ctx, &pb.AddItemRequest{
+			UserId: userID,
+			Item: &pb.CartItem{
+				ProductId: productID,
+				Quantity:  int32(quantity),
+			},
+		})
+
+	return err
+}
+
+func (fe *frontendServer) emptyCart(ctx context.Context, userID string) error {
+	_, err := pb.NewCartServiceClient(fe.cartServiceConn).
+		EmptyCart(ctx, &pb.EmptyCartRequest{UserId: userID})
+
+	return err
+}
+
 // func (fe *frontendServer) getCurrencies(ctx context.Context) ([]string, error) {
 // 	currs, err := pb.NewCurrencyServiceClient(fe.currencySvcConn).
 // 		GetSupportedCurrencies(ctx, &pb.Empty{})
