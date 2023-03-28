@@ -12,7 +12,7 @@ spec:
         app: currency-service
     spec:
       containers:
-      - name: server
+      - name: currency-server
         image: thien0611/currency-service:latest
         ports:
         - name: grpc

@@ -12,7 +12,7 @@ spec:
         app: product-service
     spec:
       containers:
-      - name: server
+      - name: product-server
         image: thien0611/product-service:latest
         ports:
         - containerPort: 3050

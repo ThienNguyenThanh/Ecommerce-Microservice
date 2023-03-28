@@ -12,7 +12,7 @@ spec:
         app: cart-service
     spec:
       containers:
-      - name: server
+      - name: cart-server
         image: thien0611/cart-service:latest
         ports:
         - containerPort: 3090
