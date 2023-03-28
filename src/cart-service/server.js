@@ -3,7 +3,13 @@ const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 const pino = require('pino');
 const redis = require('redis');
-const redisClient = redis.createClient();
+const redisClient = redis.createClient({
+  
+  socket: {
+    port: 6379,
+    host: "127.0.0.1"
+  }
+});
 const { callbackify } = require("util");
 
 const PROTO_PATH = path.join(__dirname, './proto/cart.proto');
