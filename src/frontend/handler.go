@@ -148,14 +148,14 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.Context())
 
-	currencies, err := fe.getCurrencies(r.Context())
-	if err != nil {
-		panic(fmt.Sprintf("%v: could not retrieve currencies", err))
-	}
-
 	products, err := fe.getProducts(r.Context())
 	if err != nil {
 		panic(fmt.Sprintf("%v: could not retrieve products", err))
+	}
+
+	currencies, err := fe.getCurrencies(r.Context())
+	if err != nil {
+		panic(fmt.Sprintf("%v: could not retrieve currencies", err))
 	}
 
 	cart, err := fe.getCart(r.Context(), "thien123")

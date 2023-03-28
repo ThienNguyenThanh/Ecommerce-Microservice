@@ -7,8 +7,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/spf13/viper"
+
+	"github.com/gorilla/mux"
 	"google.golang.org/grpc"
 )
 
@@ -28,7 +29,7 @@ var (
 )
 
 const (
-	port            = "3080"
+	port            = "8080"
 	defaultCurrency = "USD"
 	cookieMaxAge    = 60 * 60 * 48
 
@@ -76,7 +77,7 @@ func main() {
 	var handler http.Handler = r
 
 	fmt.Println("Start server at port " + srvPort)
-	log.Fatal(http.ListenAndServe("localhost:"+srvPort, handler))
+	log.Fatal(http.ListenAndServe("127.0.0.1:"+srvPort, handler))
 
 	// viperenv := mustMapEnv("STRONGEST_AVENGER")
 
@@ -98,6 +99,11 @@ func mustMapEnv(target *string, envKey string) {
 	if !ok {
 		log.Fatalf("Invalid type assertion")
 	}
+
+	// value := os.Getenv(envKey)
+	// if value == "" {
+	// 	panic(fmt.Sprintf("environment variable %q not set", envKey))
+	// }
 	// return value
 	*target = value
 
