@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
-
-	"github.com/spf13/viper"
 
 	"github.com/gorilla/mux"
 	"google.golang.org/grpc"
@@ -53,6 +52,7 @@ func main() {
 
 	ctx := context.Background()
 	srvPort := port
+	addr := os.Getenv("LISTEN_ADDR")
 	svc := new(frontendServer)
 
 	mustMapEnv(&svc.productCatalogServiceAddress, "PRODUCT_CATALOG_SERVICE_ADDR")
@@ -76,8 +76,8 @@ func main() {
 
 	var handler http.Handler = r
 
-	fmt.Println("Start server at port " + srvPort)
-	log.Fatal(http.ListenAndServe("127.0.0.1:"+srvPort, handler))
+	fmt.Println("Start server on " + addr + ":" + srvPort)
+	log.Fatal(http.ListenAndServe(addr+":"+srvPort, handler))
 
 	// viperenv := mustMapEnv("STRONGEST_AVENGER")
 
@@ -85,32 +85,12 @@ func main() {
 }
 
 func mustMapEnv(target *string, envKey string) {
-	viper.SetConfigFile(".env")
-
-	// Find and read the config file
-	err := viper.ReadInConfig()
-
-	if err != nil {
-		log.Fatalf("Error while reading config file %s", err)
+	value := os.Getenv(envKey)
+	if value == "" {
+		panic(fmt.Sprintf("environment variable %q not set", envKey))
 	}
 
-	value, ok := viper.Get(envKey).(string)
-
-	if !ok {
-		log.Fatalf("Invalid type assertion")
-	}
-
-	// value := os.Getenv(envKey)
-	// if value == "" {
-	// 	panic(fmt.Sprintf("environment variable %q not set", envKey))
-	// }
-	// return value
 	*target = value
-
-	//   v := os.Getenv(envKey)
-	// 	if v == "" {
-	// 		panic(fmt.Sprintf("environment variable %q not set", envKey))
-	// 	}
 }
 
 func mustConnGRPC(ctx context.Context, conn **grpc.ClientConn, addr string) {
