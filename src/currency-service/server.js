@@ -9,7 +9,7 @@ const PORT = 3040;
 const shopProto = _loadProto(PROTO_PATH).lofishop;
 
 const logger = pino({
-    name: 'cartservice-server',
+    name: 'currencyservice-server',
     messageKey: 'message',
     formatters: {
       level (logLevelString, logLevelNum) {
