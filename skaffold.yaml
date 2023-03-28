@@ -1,0 +1,32 @@
+apiVersion: skaffold/v3
+kind: Config
+metadata:
+  name: app
+build:
+  artifacts:
+  # image tags are relative; to specify an image repo (e.g. GCR), you
+  # must provide a "default repo" using one of the methods described
+  # here:
+  # https://skaffold.dev/docs/concepts/#image-repository-handling
+  - image: thien0611/product-service
+    context: src/productcatalog-service
+  - image: thien0611/currency-service
+    context: src/currency-service
+  - image: thien0611/cart-service
+    context: src/cart-service
+  - image: thien0611/frontend
+    context: src/frontend
+  tagPolicy:
+    gitCommit: {}
+  local:
+    useBuildkit: false
+manifests:
+  kustomize:
+    paths:
+    - kubernetes-manifests
+deploy:
+  kubectl: {}
+
+
+
+
