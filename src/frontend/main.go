@@ -46,6 +46,9 @@ type frontendServer struct {
 
 	currencyServiceAddress string
 	currencyServiceConn    *grpc.ClientConn
+
+	shippingServiceAddress string
+	shippingServiceConn    *grpc.ClientConn
 }
 
 func main() {
@@ -58,10 +61,12 @@ func main() {
 	mustMapEnv(&svc.productCatalogServiceAddress, "PRODUCT_CATALOG_SERVICE_ADDR")
 	mustMapEnv(&svc.cartServiceAddress, "CART_SERVICE_ADDR")
 	mustMapEnv(&svc.currencyServiceAddress, "CURRENCY_SERVICE_ADDR")
+	mustMapEnv(&svc.shippingServiceAddress, "SHIPPING_SERVICE_ADDR")
 
 	mustConnGRPC(ctx, &svc.productCatalogServiceConn, svc.productCatalogServiceAddress)
 	mustConnGRPC(ctx, &svc.cartServiceConn, svc.cartServiceAddress)
 	mustConnGRPC(ctx, &svc.currencyServiceConn, svc.currencyServiceAddress)
+	mustConnGRPC(ctx, &svc.shippingServiceConn, svc.shippingServiceAddress)
 
 	r := mux.NewRouter()
 	fs := http.FileServer(http.Dir("./static"))

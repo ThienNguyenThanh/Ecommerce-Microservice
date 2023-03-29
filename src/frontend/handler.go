@@ -8,6 +8,7 @@ import (
 	"time"
 
 	pb "microservices/frontend/genproto"
+	"microservices/frontend/money"
 
 	"github.com/gorilla/mux"
 )
@@ -58,6 +59,11 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 		panic(fmt.Sprintf("%v: could not retrieve currencies", err))
 	}
 
+	shippingCost, err := fe.getShippingQuote(r.Context(), cart, currentCurrency(r))
+	if err != nil {
+		panic(fmt.Sprintf("%v: failed to get shipping quote", err))
+	}
+
 	type cartItemView struct {
 		Item     *pb.Product
 		Quantity int32
@@ -65,7 +71,7 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	items := make([]cartItemView, len(cart))
-	// totalPrice := pb.Money{CurrencyCode: currentCurrency(r)}
+	totalPrice := pb.Money{CurrencyCode: currentCurrency(r)}
 
 	for idx, item := range cart {
 		product, err := fe.getProduct(r.Context(), item.GetProductId())
@@ -73,20 +79,20 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 			panic(fmt.Sprintf("%v: Can not retrieve product", err))
 		}
 
-		// price, err := fe.convertCurrency(r.Context(), product.GetPriceUsd(), currentCurrency(r))
-		// if err != nil {
-		// 	panic(fmt.Sprintf("%v: could not convert currency for productt", err))
-		// }
+		price, err := fe.convertCurrency(r.Context(), product.GetPriceUsd(), currentCurrency(r))
+		if err != nil {
+			panic(fmt.Sprintf("%v: could not convert currency for productt", err))
+		}
 
-		// multPrice := money.MultiplySlow(*price, uint32(item.GetQuantity()))
+		multPrice := money.MultiplySlow(*price, uint32(item.GetQuantity()))
 		items[idx] = cartItemView{
 			Item:     product,
 			Quantity: item.GetQuantity(),
-			// Price:    &multPrice
-		}
+			Price:    &multPrice}
+		totalPrice = money.Must(money.Sum(totalPrice, multPrice))
 	}
 
-	// totalPrice = money.Must(money.Sum(totalPrice, *shippingCost))
+	totalPrice = money.Must(money.Sum(totalPrice, *shippingCost))
 	year := time.Now().Year()
 
 	tpl.ExecuteTemplate(w, "cart", map[string]interface{}{
