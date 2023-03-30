@@ -15,12 +15,13 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+ - redis.yaml
  - cart-service.yaml
  - currency-service.yaml
- - frontend.yaml
 # - loadgenerator.yaml # During development, the loadgenerator module inside skaffold.yaml will be used.
  - product-service.yaml
- - redis.yaml
+ - shipping-service.yaml
+ - frontend.yaml
 # components:
 # - ../kustomize/components/cymbal-branding
 # - ../kustomize/components/google-cloud-operations

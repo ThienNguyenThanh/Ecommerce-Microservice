@@ -14,6 +14,8 @@ build:
     context: src/currency-service
   - image: thien0611/cart-service
     context: src/cart-service
+  - image: thien0611/shipping-service
+    context: src/shipping-service
   - image: thien0611/frontend
     context: src/frontend
   tagPolicy:
