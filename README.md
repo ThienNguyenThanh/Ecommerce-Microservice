@@ -1,70 +1,43 @@
-# Getting Started with Create React App
+# Run local
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This doc explains how to build and run the Cymbal Shops source code locally using the `skaffold` command-line tool.  
 
-## Available Scripts
+## Prerequisites 
 
-In the project directory, you can run:
+- [Docker for Desktop](https://www.docker.com/products/docker-desktop).
+- kubectl
+- [skaffold](https://skaffold.dev/docs/install/) (latest version recommended), a tool that builds and deploys Docker images in bulk. 
+- [Minikube](https://minikube.sigs.k8s.io/docs/start/) 
 
-### `npm start`
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Local Cluster 
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+1. Launch a local Kubernetes cluster with one of the following tools:
 
-### `npm test`
+    - To launch **Minikube** (tested with Ubuntu Linux). Please, ensure that the
+       local Kubernetes cluster has at least:
+        - 4 CPUs
+        - 4.0 GiB memory
+        - 32 GB disk space
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+      ```shell
+      minikube start --cpus=4 --memory 4096 --disk-size 32g
+      ```
 
-### `npm run build`
+2. Run `kubectl get nodes` to verify you're connected to the respective control plane.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+3. Run `skaffold run` (first time will be slow, it can take ~20 minutes).
+   This will build and deploy the application. If you need to rebuild the images
+   automatically as you refactor the code, run `skaffold dev` command.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+4. Run `kubectl get pods` to verify the Pods are ready and running.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+5. Run `kubectl port-forward deployment/frontend 8080:8080` to forward a port to the frontend service.
 
-### `npm run eject`
+6. Navigate to `localhost:8080` to access the web frontend.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Cleanup
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+If you've deployed the application with `skaffold run` command, you can run
+`skaffold delete` to clean up the deployed resources.
