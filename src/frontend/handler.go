@@ -100,6 +100,8 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 		"currencies":       currencies,
 		"items":            items,
 		"show_currency":    true,
+		"total_cost":       totalPrice,
+		"shipping_cost":    shippingCost,
 		"cart_size":        cartSize(cart),
 		"expiration_years": []int{year, year + 1, year + 2, year + 3, year + 4},
 	})

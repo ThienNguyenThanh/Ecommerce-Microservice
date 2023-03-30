@@ -74,3 +74,15 @@ func (fe *frontendServer) convertCurrency(ctx context.Context, money *pb.Money, 
 			From:   money,
 			ToCode: currency})
 }
+
+func (fe *frontendServer) getShippingQuote(ctx context.Context, items []*pb.CartItem, currency string) (*pb.Money, error) {
+	quote, err := pb.NewShippingServiceClient(fe.shippingServiceConn).GetQuote(ctx,
+		&pb.GetQuoteRequest{
+			Address: nil,
+			Items:   items})
+	if err != nil {
+		return nil, err
+	}
+	localized, err := fe.convertCurrency(ctx, quote.GetCostUsd(), currency)
+	return localized, err
+}
