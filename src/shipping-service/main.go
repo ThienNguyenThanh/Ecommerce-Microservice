@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	pb "microservices/product/genproto"
+	pb "microservices/shipping/genproto"
 
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -60,7 +60,9 @@ func main() {
 	}
 }
 
-type server struct{}
+type server struct {
+	pb.UnimplementedShippingServiceServer
+}
 
 func (s *server) GetQuote(ctx context.Context, in *pb.GetQuoteRequest) (*pb.GetQuoteResponse, error) {
 	log.Info("[GetQuote] received request")
