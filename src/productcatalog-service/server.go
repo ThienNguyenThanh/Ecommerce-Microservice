@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bytes"
+	// "bytes"
 	"context"
 	"fmt"
 	pb "microservices/product/genproto"
@@ -10,11 +10,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/jsonpb"
+	"encoding/json"
+	// "github.com/golang/protobuf/jsonpb"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var (
@@ -26,6 +31,16 @@ var (
 
 type productCatalog struct {
 	pb.UnimplementedProductCatalogServiceServer
+}
+
+type productCollection struct {
+	id           primitive.ObjectID `bson:"_id"`
+	name         string
+	description  string 
+	picture      string
+	priceUsd     interface{}
+	categories   interface{}   
+	inStock      int32
 }
 
 func init() {
@@ -67,16 +82,56 @@ func run(port string) string {
 }
 
 func readProductFile(products *pb.ListProductsResponse) error {
-	productJSON, err := os.ReadFile("products.json")
+	uri := os.Getenv("MONGODB_URI")
+	if uri == "" {
+		log.Fatal("You must set your 'MONGODB_URI' environmental variable. See\n\t https://www.mongodb.com/docs/drivers/go/current/usage-examples/#environment-variable")
+	}
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
 	if err != nil {
-		log.Fatalf("failed to open product catalog json file: %v", err)
-		return err
+		panic(err)
 	}
-	if err := jsonpb.Unmarshal(bytes.NewReader(productJSON), products); err != nil {
-		log.Warnf("failed to parse the catalog JSON: %v", err)
-		return err
+
+	defer func() {
+		if err := client.Disconnect(context.TODO()); err != nil {
+			panic(err)
+		}
+	}()
+
+	collection := client.Database("Product-Service").Collection("Products")
+	filter := bson.D{{}}
+
+	cursor, err := collection.Find(context.TODO(), filter)
+	if err != nil {
+		panic(err)
 	}
-	log.Info("successfully parsed product catalog json")
+	
+	var results []productCollection
+	if err = cursor.All(context.TODO(), &results); err != nil {
+		panic(err)
+	}
+	fmt.Print(results)
+	for _, result := range results {
+		cursor.Decode(&result)
+		
+		output, err := json.MarshalIndent(result, "", "    ")
+		if err != nil {
+			panic(err)
+		}
+		
+		fmt.Printf("%s\n", output)
+	}
+
+
+	// productJSON, err := os.ReadFile("products.json")
+	// if err != nil {
+	// 	log.Fatalf("failed to open product catalog json file: %v", err)
+	// 	return err
+	// }
+	// if err := jsonpb.Unmarshal(bytes.NewReader(productJSON), products); err != nil {
+	// 	log.Warnf("failed to parse the catalog JSON: %v", err)
+	// 	return err
+	// }
+	// log.Info("successfully parsed product catalog json")
 	return nil
 }
 

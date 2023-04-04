@@ -12,13 +12,15 @@ spec:
         app: product-service
     spec:
       containers:
-      - name: product-server
-        image: thien0611/product-service:v1.0
-        ports:
-        - containerPort: 3050
-        env:
-        - name: PORT
-          value: "3050"
+        - name: product-server
+          image: thien0611/product-service:v1.0
+          ports:
+            - containerPort: 3050
+          env:
+            - name: PORT
+              value: "3050"
+            - name: MONGODB_URI
+              value: "mongodb+srv://thien123:vx6UXKtUqv2ncAt4@ecommerce-microservices.xa8gtus.mongodb.net/?retryWrites=true&w=majority"
 ---
 apiVersion: v1
 kind: Service
@@ -28,6 +30,6 @@ spec:
   selector:
     app: product-service
   ports:
-  - name: grpc
-    port: 3050
-    targetPort: 3050
+    - name: grpc
+      port: 3050
+      targetPort: 3050
