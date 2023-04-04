@@ -73,6 +73,7 @@ message Product {
     // Categories such as "clothing" or "kitchen" that can be used to look up
     // other related products.
     repeated string categories = 6;
+    int32 in_stock = 7;
 }
 
 message ListProductsResponse {
