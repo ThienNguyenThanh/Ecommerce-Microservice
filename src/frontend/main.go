@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/gorilla/mux"
 	"google.golang.org/grpc"
+	"github.com/sirupsen/logrus"
 )
 
 type Header struct {
@@ -37,6 +37,8 @@ const (
 	cookieCurrency  = cookiePrefix + "currency"
 )
 
+type ctxKeySessionID struct {}
+
 type frontendServer struct {
 	productCatalogServiceAddress string
 	productCatalogServiceConn    *grpc.ClientConn
@@ -54,6 +56,18 @@ type frontendServer struct {
 func main() {
 
 	ctx := context.Background()
+	log := logrus.New()
+	log.Level = logrus.DebugLevel
+	log.Formatter = &logrus.JSONFormatter{
+		FieldMap: logrus.FieldMap{
+			logrus.FieldKeyTime:  "timestamp",
+			logrus.FieldKeyLevel: "severity",
+			logrus.FieldKeyMsg:   "message",
+		},
+		TimestampFormat: time.RFC3339Nano,
+	}
+	log.Out = os.Stdout
+
 	srvPort := port
 	addr := os.Getenv("LISTEN_ADDR")
 	svc := new(frontendServer)
@@ -80,8 +94,10 @@ func main() {
 	r.HandleFunc("/setCurrency", svc.setCurrencyHandler).Methods(http.MethodPost)
 
 	var handler http.Handler = r
+	handler = &logHandler{log: log, next: handler}     // add logging
+	handler = ensureSessionID(handler)                 // add session ID
 
-	fmt.Println("Start server on " + addr + ":" + srvPort)
+	log.Infof("Start server on " + addr + ":" + srvPort)
 	log.Fatal(http.ListenAndServe(addr+":"+srvPort, handler))
 
 	// viperenv := mustMapEnv("STRONGEST_AVENGER")

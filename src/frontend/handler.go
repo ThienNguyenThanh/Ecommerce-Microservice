@@ -39,7 +39,7 @@ func (fe *frontendServer) addToCartHandler(w http.ResponseWriter, r *http.Reques
 		panic(fmt.Sprintf("%v: Can not retrieve product", err))
 	}
 
-	if err := fe.addToCart(r.Context(), "thien123", product.GetId(), int32(quantity)); err != nil {
+	if err := fe.addToCart(r.Context(), sessionID(r), product.GetId(), int32(quantity)); err != nil {
 		panic(fmt.Sprintf("%v: Fail to add to cart", err))
 	}
 
@@ -48,7 +48,7 @@ func (fe *frontendServer) addToCartHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (fe *frontendServer) emptyCartHandler(w http.ResponseWriter, r *http.Request) {
-	if err := fe.emptyCart(r.Context(), "thien123"); err != nil {
+	if err := fe.emptyCart(r.Context(), sessionID(r)); err != nil {
 		panic(fmt.Sprintf("%v: Fail to add to cart", err))
 	}
 
@@ -57,7 +57,7 @@ func (fe *frontendServer) emptyCartHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request) {
-	cart, err := fe.getCart(r.Context(), "thien123")
+	cart, err := fe.getCart(r.Context(), sessionID(r))
 	if err != nil {
 		panic(fmt.Sprintf("%v: could not retrieve cart", err))
 	}
@@ -146,7 +146,7 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		panic(fmt.Sprintf("%v: Can not retrieve product", err))
 	}
-	cart, err := fe.getCart(r.Context(), "thien123")
+	cart, err := fe.getCart(r.Context(), sessionID(r))
 	if err != nil {
 		panic(fmt.Sprintf("%v: could not retrieve cart", err))
 	}
@@ -174,7 +174,7 @@ func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 		panic(fmt.Sprintf("%v: could not retrieve currencies", err))
 	}
 
-	cart, err := fe.getCart(r.Context(), "thien123")
+	cart, err := fe.getCart(r.Context(), sessionID(r))
 	if err != nil {
 		panic(fmt.Sprintf("%v: could not retrieve cart", err))
 	}
@@ -238,6 +238,14 @@ func cartSize(c []*pb.CartItem) int {
 		cartSize += int(item.GetQuantity())
 	}
 	return cartSize
+}
+
+func sessionID(r *http.Request) string {
+	v := r.Context().Value(ctxKeySessionID{})
+	if v != nil {
+		return v.(string)
+	}
+	return ""
 }
 
 func currentCurrency(r *http.Request) string {
