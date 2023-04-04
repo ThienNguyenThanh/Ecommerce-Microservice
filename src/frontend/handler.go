@@ -17,6 +17,14 @@ var tpl = template.Must(template.New("").
 	Funcs(template.FuncMap{
 		"renderMoney":        renderMoney,
 		"renderCurrencyLogo": renderCurrencyLogo,
+		"Iterate": func(count int32) []int32 {
+			var i int32
+			var Items []int32
+			for i = 1; i < int32(count+1); i++ {
+				Items = append(Items, i)
+			}
+			return Items
+		},
 	}).ParseGlob("templates/*.html"))
 
 func (fe *frontendServer) addToCartHandler(w http.ResponseWriter, r *http.Request) {

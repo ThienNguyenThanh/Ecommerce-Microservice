@@ -15,17 +15,14 @@
           <h2>{{ $.product.Item.Name }}</h2>
           <p class="product-price">{{ renderMoney $.product.Price }}</p>
           <p>{{ $.product.Item.Description }}</p>
-
+          
           <form method="POST" action="/cart">
             <input type="hidden" name="product_id" value="{{$.product.Item.Id}}" />
             <div class="product-quantity-dropdown">
               <select name="quantity" id="quantity">
-                <option>1</option>
-                <option>2</option>
-                <option>3</option>
-                <option>4</option>
-                <option>5</option>
-                <option>10</option>
+                {{- range $val := Iterate $.product.Item.InStock}}
+                <option value="{{ $val }}">{{ $val }}</option>
+                {{- end }}
               </select>
               <img src="/static/icons/Hipster_DownArrow.svg" alt="">
             </div>
