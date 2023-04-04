@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name: product-server
-        image: thien0611/product-service:latest
+        image: thien0611/product-service:v1.0
         ports:
         - containerPort: 3050
         env:
