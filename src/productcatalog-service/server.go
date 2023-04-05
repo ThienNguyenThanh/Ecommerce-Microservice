@@ -10,16 +10,15 @@ import (
 	"strings"
 	"time"
 
-	"encoding/json"
 	// "github.com/golang/protobuf/jsonpb"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var (
@@ -33,14 +32,20 @@ type productCatalog struct {
 	pb.UnimplementedProductCatalogServiceServer
 }
 
+type PriceUSD struct {
+	CurrencyCode string `bson:"currencyCode"`
+	Units        int32
+	Nanos        int32
+}
+
 type productCollection struct {
-	id           primitive.ObjectID `bson:"_id"`
-	name         string
-	description  string 
-	picture      string
-	priceUsd     interface{}
-	categories   interface{}   
-	inStock      int32
+	Id          primitive.ObjectID `bson:"_id"`
+	Name        string
+	Description string
+	Picture     string
+	PriceUsd    PriceUSD `bson:"priceUsd"`
+	Categories  []string
+	InStock     int32
 }
 
 func init() {
@@ -98,29 +103,31 @@ func readProductFile(products *pb.ListProductsResponse) error {
 	}()
 
 	collection := client.Database("Product-Service").Collection("Products")
-	filter := bson.D{{}}
 
-	cursor, err := collection.Find(context.TODO(), filter)
+	cursor, err := collection.Find(context.TODO(), bson.M{})
 	if err != nil {
 		panic(err)
 	}
-	
+
 	var results []productCollection
 	if err = cursor.All(context.TODO(), &results); err != nil {
 		panic(err)
 	}
-	fmt.Print(results)
-	for _, result := range results {
-		cursor.Decode(&result)
-		
-		output, err := json.MarshalIndent(result, "", "    ")
-		if err != nil {
-			panic(err)
-		}
-		
-		fmt.Printf("%s\n", output)
-	}
 
+	for _, result := range results {
+		fmt.Printf("%+v\n", result)
+		// products[idx] = &pb.ListProductsResponse{
+		// 	Id: result.Id.ObjectID,
+		// }
+		// cursor.Decode(&result)
+
+		// output, err := json.MarshalIndent(result, "", "    ")
+		// if err != nil {
+		// 	panic(err)
+		// }
+
+		// fmt.Printf("%s\n", output)
+	}
 
 	// productJSON, err := os.ReadFile("products.json")
 	// if err != nil {
