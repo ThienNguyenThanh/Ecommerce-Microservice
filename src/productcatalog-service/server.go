@@ -9,16 +9,20 @@ import (
 	"os"
 	"strings"
 	"time"
+	// "encoding/gob"
 
 	// "github.com/golang/protobuf/jsonpb"
+	
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	// "go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	// "google.golang.org/protobuf/encoding/protojson"
+	// "github.com/redis/go-redis/v9"
 )
 
 var (
@@ -32,18 +36,18 @@ type productCatalog struct {
 	pb.UnimplementedProductCatalogServiceServer
 }
 
-type PriceUSD struct {
+type PriceUsd struct {
 	CurrencyCode string `bson:"currencyCode"`
-	Units        int32
+	Units        int64
 	Nanos        int32
 }
 
 type productCollection struct {
-	Id          primitive.ObjectID `bson:"_id"`
+	Id          string `bson:"_id"`
 	Name        string
 	Description string
 	Picture     string
-	PriceUsd    PriceUSD `bson:"priceUsd"`
+	PriceUsd    PriceUsd `bson:"priceUsd"`
 	Categories  []string
 	InStock     int32
 }
@@ -59,10 +63,11 @@ func init() {
 		TimestampFormat: time.RFC3339Nano,
 	}
 	log.Out = os.Stdout
-	err := readProductFile(&cat)
-	if err != nil {
-		log.Warnf("could not parse product catalog")
-	}
+
+	// err := readProductFile(&cat)
+	// if err != nil {
+	// 	log.Warnf("could not parse product catalog")
+	// }
 }
 
 func main() {
@@ -86,11 +91,13 @@ func run(port string) string {
 	return l.Addr().String()
 }
 
-func readProductFile(products *pb.ListProductsResponse) error {
+
+func parseCatalog() []*pb.Product {
 	uri := os.Getenv("MONGODB_URI")
 	if uri == "" {
-		log.Fatal("You must set your 'MONGODB_URI' environmental variable. See\n\t https://www.mongodb.com/docs/drivers/go/current/usage-examples/#environment-variable")
+		log.Fatal("You must set your 'MONGODB_URI' environmental variable.")
 	}
+
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
 	if err != nil {
 		panic(err)
@@ -113,43 +120,26 @@ func readProductFile(products *pb.ListProductsResponse) error {
 	if err = cursor.All(context.TODO(), &results); err != nil {
 		panic(err)
 	}
-
+	res := []*pb.Product{}
 	for _, result := range results {
 		fmt.Printf("%+v\n", result)
-		// products[idx] = &pb.ListProductsResponse{
-		// 	Id: result.Id.ObjectID,
-		// }
-		// cursor.Decode(&result)
-
-		// output, err := json.MarshalIndent(result, "", "    ")
-		// if err != nil {
-		// 	panic(err)
-		// }
-
-		// fmt.Printf("%s\n", output)
+		res = append(res, 
+						&pb.Product{
+							Id: result.Id,
+							Name: result.Name,
+							Description: result.Description,
+							Picture: result.Picture,
+							PriceUsd: &pb.Money{
+								CurrencyCode: result.PriceUsd.CurrencyCode,
+								Units: result.PriceUsd.Units,
+								Nanos: result.PriceUsd.Nanos,
+							},
+							Categories: result.Categories,
+							InStock: result.InStock,
+						})
 	}
-
-	// productJSON, err := os.ReadFile("products.json")
-	// if err != nil {
-	// 	log.Fatalf("failed to open product catalog json file: %v", err)
-	// 	return err
-	// }
-	// if err := jsonpb.Unmarshal(bytes.NewReader(productJSON), products); err != nil {
-	// 	log.Warnf("failed to parse the catalog JSON: %v", err)
-	// 	return err
-	// }
-	// log.Info("successfully parsed product catalog json")
-	return nil
-}
-
-func parseCatalog() []*pb.Product {
-	if len(cat.Products) == 0 {
-		err := readProductFile(&cat)
-		if err != nil {
-			return []*pb.Product{}
-		}
-	}
-	return cat.Products
+	cat.Products = res
+	return res
 }
 
 func (p *productCatalog) ListProducts(context.Context, *pb.Empty) (
