@@ -209,27 +209,7 @@ func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// func renderMoney(money *pb.Money) string {
-// 	currencyLogo := renderCurrencyLogo(money.GetCurrencyCode())
-// 	return fmt.Sprintf("%s%d.%02d", currencyLogo, money.GetUnits(), money.GetNanos()/10000000)
-// }
 
-// func renderCurrencyLogo(currencyCode string) string {
-// 	logos := map[string]string{
-// 		"USD": "$",
-// 		"CAD": "$",
-// 		"JPY": "¥",
-// 		"EUR": "€",
-// 		"TRY": "₺",
-// 		"GBP": "£",
-// 	}
-
-// 	logo := "$" //default
-// 	if val, ok := logos[currencyCode]; ok {
-// 		logo = val
-// 	}
-// 	return logo
-// }
 
 // get total # of items in cart
 func cartSize(c []*pb.CartItem) int {

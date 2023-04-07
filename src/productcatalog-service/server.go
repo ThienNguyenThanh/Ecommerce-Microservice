@@ -64,10 +64,10 @@ func init() {
 	}
 	log.Out = os.Stdout
 
-	// err := readProductFile(&cat)
-	// if err != nil {
-	// 	log.Warnf("could not parse product catalog")
-	// }
+	err := fetchDataFromMongoDB()
+	if err != nil {
+		log.Warnf("could not fetch products.")
+	}
 }
 
 func main() {
@@ -92,7 +92,7 @@ func run(port string) string {
 }
 
 
-func parseCatalog() []*pb.Product {
+func fetchDataFromMongoDB() error {
 	uri := os.Getenv("MONGODB_URI")
 	if uri == "" {
 		log.Fatal("You must set your 'MONGODB_URI' environmental variable.")
@@ -139,20 +139,20 @@ func parseCatalog() []*pb.Product {
 						})
 	}
 	cat.Products = res
-	return res
+	return nil
 }
 
 func (p *productCatalog) ListProducts(context.Context, *pb.Empty) (
 	*pb.ListProductsResponse, error) {
-	return &pb.ListProductsResponse{Products: parseCatalog()}, nil
+	return &pb.ListProductsResponse{Products: cat.Products}, nil
 }
 
 func (p *productCatalog) GetProduct(ctx context.Context, req *pb.GetProductRequest) (
 	*pb.Product, error) {
 	var found *pb.Product
-	for i := 0; i < len(parseCatalog()); i++ {
-		if req.Id == parseCatalog()[i].Id {
-			found = parseCatalog()[i]
+	for i := 0; i < len(cat.Products); i++ {
+		if req.Id == cat.Products[i].Id {
+			found = cat.Products[i]
 		}
 	}
 	if found == nil {
@@ -164,7 +164,7 @@ func (p *productCatalog) GetProduct(ctx context.Context, req *pb.GetProductReque
 func (p *productCatalog) SearchProducts(ctx context.Context, req *pb.SearchProductsRequest) (
 	*pb.SearchProductsResponse, error) {
 	var ps []*pb.Product
-	for _, p := range parseCatalog() {
+	for _, p := range cat.Products {
 		if strings.Contains(strings.ToLower(p.Name), strings.ToLower(req.Query)) ||
 			strings.Contains(strings.ToLower(p.Description), strings.ToLower(req.Query)) {
 			ps = append(ps, p)
