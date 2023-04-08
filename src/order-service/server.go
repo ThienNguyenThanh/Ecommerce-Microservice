@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
-	"time"
-	"os"
+	"fmt"
+	pb "microservices/order/genproto"
 	"net"
+	"os"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -12,16 +14,14 @@ import (
 	"google.golang.org/grpc"
 )
 
-
 var (
-
 	log *logrus.Logger
 
 	port = "8010"
 )
 
 type Order struct {
-
+	pb.UnimplementedOrderServiceServer
 }
 
 func init() {
@@ -44,6 +44,10 @@ func init() {
 
 func main() {
 	log.Printf("Start server at: %v", port)
+	run(port)
+}
+
+func run(port string) string {
 	l, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
 	if err != nil {
 		log.Fatalf("Fail to listen: %v", err)
@@ -53,12 +57,11 @@ func main() {
 
 	svc := &Order{}
 
-	pb.RegisterProductCatalogServiceServer(srv, svc)
+	pb.RegisterOrderServiceServer(srv, svc)
 	srv.Serve(l)
 
 	return l.Addr().String()
 }
-
 
 func fetchDataFromMongoDB() error {
 	// uri := os.Getenv("MONGODB_URI")
@@ -80,6 +83,5 @@ func fetchDataFromMongoDB() error {
 
 	collection := client.Database("Order-Service").Collection("Order")
 
-	
 	return nil
 }
