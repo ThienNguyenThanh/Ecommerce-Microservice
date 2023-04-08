@@ -1,19 +1,26 @@
 package main
 
 import (
-	"time"
 	"context"
-	"net"
 	"fmt"
+	"net"
 	"os"
+	"time"
 
-	pb "microservices/frontend/genproto"
+	pb "microservices/checkout/genproto"
+	"microservices/checkout/money"
+
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
-) 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+)
+
 const (
 	listenPort = "3010"
 )
+
 var log *logrus.Logger
 
 func init() {
@@ -31,8 +38,10 @@ func init() {
 }
 
 type checkoutService struct {
+	pb.UnimplementedCheckoutServiceServer
+
 	productCatalogServiceAddress string
-	productCatalogServiceConn *grpc.ClientConn
+	productCatalogServiceConn    *grpc.ClientConn
 
 	cartServiceAddress string
 	cartServiceConn    *grpc.ClientConn
@@ -71,7 +80,6 @@ func main() {
 	}
 
 	var srv *grpc.Server
-
 
 	srv = grpc.NewServer()
 
@@ -247,7 +255,6 @@ func (cs *checkoutService) shipOrder(ctx context.Context, address *pb.Address, i
 	}
 	return resp.GetTrackingId(), nil
 }
-
 func mustMapEnv(target *string, envKey string) {
 	value := os.Getenv(envKey)
 	if value == "" {
@@ -268,35 +275,36 @@ func mustConnGRPC(ctx context.Context, conn **grpc.ClientConn, addr string) {
 	}
 }
 
-func checkoutTransaction() error {
-	uri := os.Getenv("MONGODB_URI")
-	if uri == "" {
-		log.Fatal("You must set your 'MONGODB_URI' environmental variable.")
-	}
+// func checkoutTransaction() error {
+// 	uri := os.Getenv("MONGODB_URI")
+// 	if uri == "" {
+// 		log.Fatal("You must set your 'MONGODB_URI' environmental variable.")
+// 	}
 
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
-	if err != nil {
-		panic(err)
-	}
+// 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	defer func() {
-		if err := client.Disconnect(context.TODO()); err != nil {
-			panic(err)
-		}
-	}()
+// 	defer func() {
+// 		if err := client.Disconnect(context.TODO()); err != nil {
+// 			panic(err)
+// 		}
+// 	}()
 
-	collection := client.Database("Product-Service").Collection("Products")
+// 	collection := client.Database("Product-Service").Collection("Products")
 
-	cursor, err := collection.Find(context.TODO(), bson.M{})
-	if err != nil {
-		panic(err)
-	}
+// 	cursor, err := collection.Find(context.TODO(), bson.M{})
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	var results []productCollection
-	if err = cursor.All(context.TODO(), &results); err != nil {
-		panic(err)
-	}
-	res := []*pb.Product{}
-	
-	return nil
-}
+// 	var results []productCollection
+// 	if err = cursor.All(context.TODO(), &results); err != nil {
+// 		panic(err)
+// 	}
+// 	res := []*pb.Product{}
+
+// 	return nil
+// }
+//
