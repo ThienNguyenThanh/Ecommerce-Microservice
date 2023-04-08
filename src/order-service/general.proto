@@ -2,10 +2,7 @@ syntax = "proto3";
 
 package lofishop;
 
-// Include package for python, java, go
-// option go_package = "./your-package-name";
-// option java_package = "pkg/api";
-// option py_generic_services = "pkg/api";
+option go_package = "microservices/order/genproto";
 
 // -----------------Cart service-----------------
 

@@ -5,4 +5,5 @@ use (
 	./src/productcatalog-service
 	./src/shipping-service
 	./src/checkout-service
+	./src/order-service
 )
