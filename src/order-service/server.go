@@ -24,6 +24,37 @@ type Order struct {
 	pb.UnimplementedOrderServiceServer
 }
 
+type Address struct {
+	StreetAddress string `bson:"street_address"`
+	City          string
+	State         string `bson:"omitempty"`
+	Country       string
+	ZipCode       int32 `bson:"zip_code"`
+}
+type Money struct {
+	CurrencyCode string `bson:"currency_code"`
+	Units        int64
+	Nanos        int32
+}
+type CartItem struct {
+	ProductId string `bson:"product_id"`
+	Quantity  int32
+}
+type OrderItem struct {
+	Item CartItem
+	Cost Money
+}
+
+type OrderCollection struct {
+	OrderId            string      `bson:"order_id"`
+	ShippingTrackingId string      `bson:"shipping_tracking_id"`
+	ShippingCost       Money       `bson:"shipping_cost"`
+	ShippingAddress    Address     `bson:"shipping_address"`
+	Items              []OrderItem `bson:"items"`
+	DeliveryStatus     string      `bson:"delivery_status"`
+	PaymentStatus      string      `bson:"payment_status"`
+}
+
 func init() {
 	log = logrus.New()
 	log.Formatter = &logrus.JSONFormatter{
@@ -38,7 +69,7 @@ func init() {
 
 	// err := fetchDataFromMongoDB()
 	// if err != nil {
-	// 	log.Warnf("could not fetch products.")
+	// 	log.Warnf("could not insert order.")
 	// }
 }
 
@@ -82,6 +113,53 @@ func fetchDataFromMongoDB() error {
 	}()
 
 	collection := client.Database("Order-Service").Collection("Order")
+	newOrder := OrderCollection{
+		OrderId:            "order1",
+		ShippingTrackingId: "tracking-ID-1",
+		ShippingCost: Money{
+			CurrencyCode: "USD",
+			Units:        19,
+			Nanos:        990000000,
+		},
+		ShippingAddress: Address{
+			StreetAddress: "100 Dien Bien Phu",
+			City:          "Ho Chi Minh",
+			State:         "N/A",
+			Country:       "VN",
+			ZipCode:       10000,
+		},
+		Items: []OrderItem{
+			OrderItem{
+				Item: CartItem{
+					ProductId: "ipad_pro",
+					Quantity:  1,
+				},
+				Cost: Money{
+					CurrencyCode: "USD",
+					Units:        19,
+					Nanos:        990000000,
+				},
+			},
+			OrderItem{
+				Item: CartItem{
+					ProductId: "ipad_pro",
+					Quantity:  1,
+				},
+				Cost: Money{
+					CurrencyCode: "USD",
+					Units:        19,
+					Nanos:        990000000,
+				},
+			},
+		},
+		DeliveryStatus: "Pending",
+		PaymentStatus:  "paid",
+	}
 
+	result, err := collection.InsertOne(context.TODO(), newOrder)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Inserted document with _id: %v\n", result.InsertedID)
 	return nil
 }
